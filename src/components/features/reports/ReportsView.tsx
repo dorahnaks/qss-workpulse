@@ -130,8 +130,8 @@ export function ReportsView() {
 
         <div className="space-y-5">
           {data.productionTrends.map((trend) => {
-            const targetWidth = Math.round((trend.target / maxTrendValue) * 100);
-            const actualWidth = Math.round((trend.actual / maxTrendValue) * 100);
+            const achievementPct = trend.achievementRate;
+            const actualWidthPct = Math.min(achievementPct, 100);
 
             return (
               <div key={trend.period}>
@@ -146,24 +146,22 @@ export function ReportsView() {
                     / {formatNumber(trend.target)} ({trend.achievementRate}%)
                   </span>
                 </div>
-                <div className="space-y-1">
-                  <div className="h-2 w-full rounded-full bg-[#F3F4F6]">
-                    <div
-                      className="h-2 rounded-full bg-slate-300"
-                      style={{ width: `${targetWidth}%` }}
-                    />
-                  </div>
-                  <div className="h-2.5 w-full rounded-full bg-[#F3F4F6]">
-                    <div
-                      className={`h-2.5 rounded-full ${
-                        trend.achievementRate >= 100
-                          ? "bg-[#10B981]"
-                          : trend.achievementRate >= 90
-                            ? "bg-[#1E3A8A]"
-                            : "bg-[#F59E0B]"
-                      }`}
-                      style={{ width: `${actualWidth}%` }}
-                    />
+                {/* Target bar (light background) with Actual bar overlaid */}
+                <div className="relative h-7 w-full rounded-lg bg-slate-200 overflow-hidden">
+                  {/* Actual output bar */}
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
+                      achievementPct >= 100
+                        ? "bg-[#10B981]"
+                        : achievementPct >= 90
+                          ? "bg-[#1E3A8A]"
+                          : "bg-[#F59E0B]"
+                    }`}
+                    style={{ width: `${Math.max(actualWidthPct, 3)}%` }}
+                  />
+                  {/* Percentage label */}
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-slate-700">
+                    {achievementPct}%
                   </div>
                 </div>
               </div>

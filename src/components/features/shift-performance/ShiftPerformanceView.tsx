@@ -126,8 +126,8 @@ export function ShiftPerformanceView() {
 
         <div className="space-y-5">
           {data.comparison.map((shift) => {
-            const widthPct = Math.round((shift.production / maxProduction) * 100);
             const achievementPct = shift.achievementRate;
+            const actualWidthPct = Math.min(achievementPct, 100);
 
             return (
               <div key={shift.shift}>
@@ -147,19 +147,27 @@ export function ShiftPerformanceView() {
                     / {formatNumber(shift.target)} ({achievementPct.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="h-8 w-full rounded-lg bg-[#F3F4F6] overflow-hidden">
+                {/* Target bar (light background) with Actual bar overlaid */}
+                <div className="relative h-8 w-full rounded-lg bg-slate-200 overflow-hidden">
+                  {/* Actual output bar */}
                   <div
-                    className={`h-full rounded-lg transition-all flex items-center justify-end pr-3 text-xs font-semibold ${
+                    className={`absolute inset-y-0 left-0 rounded-lg transition-all flex items-center justify-end pr-3 text-xs font-semibold ${
                       achievementPct >= 100
                         ? "bg-[#10B981] text-white"
                         : achievementPct >= 90
                           ? "bg-[#1E3A8A] text-white"
                           : "bg-[#F59E0B] text-white"
                     }`}
-                    style={{ width: `${Math.max(widthPct, 10)}%` }}
+                    style={{ width: `${Math.max(actualWidthPct, 5)}%` }}
                   >
-                    {achievementPct.toFixed(0)}%
+                    {actualWidthPct > 15 && `${achievementPct.toFixed(0)}%`}
                   </div>
+                  {/* Show percentage outside bar if too small */}
+                  {actualWidthPct <= 15 && (
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-xs font-semibold text-[#111827]">
+                      {achievementPct.toFixed(0)}%
+                    </span>
+                  )}
                 </div>
               </div>
             );
