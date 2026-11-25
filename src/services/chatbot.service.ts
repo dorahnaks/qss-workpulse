@@ -2,7 +2,7 @@ import { ApiError, apiRequest, isLiveApiConfigured } from "@/lib/api/client";
 import type { Locale } from "@/lib/i18n/translations";
 import { getDashboardOverview } from "@/services/dashboard.service";
 import { getNotifications } from "@/services/notifications.service";
-import { getClientTaskRequests } from "@/services/task-requests.service";
+import { getTaskRequests } from "@/services/task-requests.service";
 
 export interface ChatActionLink {
   label: string;
@@ -49,7 +49,7 @@ export async function sendAssistantMessage(
   const [summary, notifications, taskRequests] = await Promise.all([
     getDashboardOverview("today"),
     getNotifications(),
-    getClientTaskRequests(),
+    getTaskRequests(),
   ]);
 
   const q = prompt.toLowerCase();
