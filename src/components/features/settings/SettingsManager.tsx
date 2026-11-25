@@ -2,7 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { DictateButton } from "@/components/ui/DictateButton";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/api/client";
 import {
   getNotificationPreferences,
@@ -20,20 +22,22 @@ import type {
 
 type SettingsTab = "profile" | "company" | "security" | "notifications";
 
-const TABS: { id: SettingsTab; label: string }[] = [
-  { id: "profile", label: "Account Profile" },
-  { id: "company", label: "Company Details" },
-  { id: "security", label: "Security & Password" },
-  { id: "notifications", label: "Alert Preferences" },
-];
+const DEFAULT_PREFS: NotificationPreferences = {
+  productionTargetAlerts: true,
+  shiftCompletionUpdates: true,
+  teamPerformanceDigests: true,
+  lowOutputWarnings: true,
+  emailDelivery: true,
+  inAppDelivery: true,
+};
 
 const TIMEZONES = [
   "Africa/Nairobi",
+  "Africa/Kampala",
+  "Africa/Kigali",
+  "Africa/Dar_es_Salaam",
   "UTC",
   "Europe/London",
-  "America/New_York",
-  "America/Chicago",
-  "Asia/Dubai",
 ];
 
 export function SettingsManager() {
@@ -41,10 +45,19 @@ export function SettingsManager() {
   const searchParams = useSearchParams();
   const { user, company, updateUserState, updateCompanyState, logout } =
     useAuth();
+  const { t } = useLanguage();
+
+  const tabs: { id: SettingsTab; label: string }[] = [
+    { id: "profile", label: t.settings.tabProfile },
+    { id: "company", label: t.settings.tabCompany },
+    { id: "security", label: t.settings.tabSecurity },
+    { id: "notifications", label: t.settings.tabNotifications },
+  ];
 
   const tabFromUrl = searchParams.get("tab") as SettingsTab | null;
   const [activeTab, setActiveTab] = useState<SettingsTab>(
-    tabFromUrl && TABS.some((t) => t.id === tabFromUrl)
+    tabFromUrl &&
+      ["profile", "company", "security", "notifications"].includes(tabFromUrl)
       ? tabFromUrl
       : "profile"
   );
@@ -71,16 +84,9 @@ export function SettingsManager() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [showPasswords, setShowPasswords] = useState(false);
 
-  const [prefs, setPrefs] = useState<NotificationPreferences>({
-    productionTargetAlerts: true,
-    shiftCompletionUpdates: true,
-    teamPerformanceDigests: true,
-    lowOutputWarnings: true,
-    emailDelivery: true,
-    inAppDelivery: true,
-  });
-
+  const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -99,6 +105,32 @@ export function SettingsManager() {
 
   const switchTab = (tab: SettingsTab) => {
     setActiveTab(tab);
+    setFeedback(null);
+    router.replace(`/settings?tab=${tab}`, { scroll: false });
+  };
+
+  const resetProfileForm = () => {
+    if (!user) return;
+    setProfileForm({
+      name: user.name,
+      email: user.email,
+      jobTitle: user.jobTitle,
+      phone: user.phone,
+      timezone: user.timezone,
+    });
+    setFeedback(null);
+  };
+
+  const resetCompanyForm = () => {
+    if (!company) return;
+    setCompanyForm({
+      name: company.name,
+      industry: company.industry,
+      siteLocation: company.siteLocation,
+      contactEmail: company.contactEmail,
+      contactPhone: company.contactPhone,
+      address: company.address,
+    });
     setFeedback(null);
   };
 
@@ -203,27 +235,24 @@ export function SettingsManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">
-          Profile & Settings
+      {/* Header & Tabs */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="absolute inset-y-0 left-0 w-1 bg-[#0056A7]" />
+        <h2 className="text-xl font-semibold text-[#0B2D4D]">
+          {t.settings.title}
         </h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Manage your client account details, company site information, password
-          security, and alert preferences.
-        </p>
+        <p className="mt-1 text-xs text-slate-500">{t.settings.subtitle}</p>
 
-        {/* Tabs */}
         <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => switchTab(tab.id)}
               className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900"
+                  ? "bg-[#0056A7] text-white"
+                  : "bg-[#F7F8FA] text-slate-600 hover:bg-slate-200/70 hover:text-[#0B2D4D]"
               }`}
             >
               {tab.label}
@@ -236,13 +265,20 @@ export function SettingsManager() {
       {feedback && (
         <div
           role="status"
-          className={`rounded-xl border px-4 py-3 text-xs font-medium ${
+          className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-xs font-medium ${
             feedback.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : "border-rose-200 bg-rose-50 text-rose-700"
           }`}
         >
-          {feedback.message}
+          <span>{feedback.message}</span>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            className="text-xs font-semibold opacity-70 hover:opacity-100"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -250,14 +286,14 @@ export function SettingsManager() {
       {activeTab === "profile" && (
         <form
           onSubmit={handleProfileSave}
-          className="rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+          className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6"
         >
           <div className="flex items-center gap-4 border-b border-slate-100 pb-5">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-base font-bold text-indigo-700">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0056A7] text-base font-bold text-white ring-2 ring-[#F6BA16]/60">
               {user?.avatarInitials ?? "QC"}
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-[#0B2D4D]">
                 {user?.name}
               </p>
               <p className="text-xs text-slate-500">
@@ -282,7 +318,7 @@ export function SettingsManager() {
                 onChange={(e) =>
                   setProfileForm((p) => ({ ...p, name: e.target.value }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -301,7 +337,7 @@ export function SettingsManager() {
                 onChange={(e) =>
                   setProfileForm((p) => ({ ...p, email: e.target.value }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -312,15 +348,24 @@ export function SettingsManager() {
               >
                 Job Title
               </label>
-              <input
-                id="profile-job"
-                type="text"
-                value={profileForm.jobTitle}
-                onChange={(e) =>
-                  setProfileForm((p) => ({ ...p, jobTitle: e.target.value }))
-                }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
+              <div className="mt-1.5 flex items-center gap-2">
+                <input
+                  id="profile-job"
+                  type="text"
+                  value={profileForm.jobTitle}
+                  onChange={(e) =>
+                    setProfileForm((p) => ({ ...p, jobTitle: e.target.value }))
+                  }
+                  className="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
+                />
+                <DictateButton
+                  size="md"
+                  ariaLabel="Dictate job title"
+                  onResult={(spoken) =>
+                    setProfileForm((p) => ({ ...p, jobTitle: spoken }))
+                  }
+                />
+              </div>
             </div>
 
             <div>
@@ -337,7 +382,7 @@ export function SettingsManager() {
                 onChange={(e) =>
                   setProfileForm((p) => ({ ...p, phone: e.target.value }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -354,7 +399,7 @@ export function SettingsManager() {
                 onChange={(e) =>
                   setProfileForm((p) => ({ ...p, timezone: e.target.value }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               >
                 {TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>
@@ -365,13 +410,20 @@ export function SettingsManager() {
             </div>
           </div>
 
-          <div className="flex justify-end border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={resetProfileForm}
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              {t.common.reset}
+            </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+              className="rounded-lg bg-[#0056A7] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#004485] disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Save Profile Changes"}
+              {saving ? t.common.saving : t.settings.saveProfile}
             </button>
           </div>
         </form>
@@ -381,16 +433,16 @@ export function SettingsManager() {
       {activeTab === "company" && (
         <form
           onSubmit={handleCompanySave}
-          className="rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+          className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-sm font-semibold text-[#0B2D4D]">
                 Organization Profile
               </h3>
               <p className="text-xs text-slate-500">
                 Client account code:{" "}
-                <span className="font-mono font-semibold text-slate-700">
+                <span className="font-mono font-semibold text-[#0056A7]">
                   {company?.accountCode}
                 </span>
               </p>
@@ -416,7 +468,7 @@ export function SettingsManager() {
                 onChange={(e) =>
                   setCompanyForm((c) => ({ ...c, name: e.target.value }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -434,7 +486,7 @@ export function SettingsManager() {
                 onChange={(e) =>
                   setCompanyForm((c) => ({ ...c, industry: e.target.value }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -455,7 +507,7 @@ export function SettingsManager() {
                     siteLocation: e.target.value,
                   }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -476,7 +528,7 @@ export function SettingsManager() {
                     contactEmail: e.target.value,
                   }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -497,7 +549,7 @@ export function SettingsManager() {
                     contactPhone: e.target.value,
                   }))
                 }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
               />
             </div>
 
@@ -508,25 +560,41 @@ export function SettingsManager() {
               >
                 Physical Address
               </label>
-              <input
-                id="company-address"
-                type="text"
-                value={companyForm.address}
-                onChange={(e) =>
-                  setCompanyForm((c) => ({ ...c, address: e.target.value }))
-                }
-                className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
+              <div className="mt-1.5 flex items-center gap-2">
+                <input
+                  id="company-address"
+                  type="text"
+                  value={companyForm.address}
+                  onChange={(e) =>
+                    setCompanyForm((c) => ({ ...c, address: e.target.value }))
+                  }
+                  className="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
+                />
+                <DictateButton
+                  size="md"
+                  ariaLabel="Dictate physical address"
+                  onResult={(spoken) =>
+                    setCompanyForm((c) => ({ ...c, address: spoken }))
+                  }
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={resetCompanyForm}
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              {t.common.reset}
+            </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+              className="rounded-lg bg-[#0056A7] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#004485] disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Save Company Details"}
+              {saving ? t.common.saving : t.settings.saveCompany}
             </button>
           </div>
         </form>
@@ -537,16 +605,24 @@ export function SettingsManager() {
         <div className="space-y-6">
           <form
             onSubmit={handlePasswordSave}
-            className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5"
+            className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6"
           >
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">
-                Change Password
-              </h3>
-              <p className="text-xs text-slate-500">
-                Use a strong password with at least 8 characters to keep your
-                portal account secure.
-              </p>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-[#0B2D4D]">
+                  Change Password
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Use a strong password with at least 8 characters.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPasswords((prev) => !prev)}
+                className="text-xs font-semibold text-[#0056A7] hover:text-[#004485]"
+              >
+                {showPasswords ? t.auth.hide : t.auth.show}
+              </button>
             </div>
 
             <div className="max-w-md space-y-4">
@@ -559,7 +635,7 @@ export function SettingsManager() {
                 </label>
                 <input
                   id="current-password"
-                  type="password"
+                  type={showPasswords ? "text" : "password"}
                   required
                   value={passwordForm.currentPassword}
                   onChange={(e) =>
@@ -568,7 +644,7 @@ export function SettingsManager() {
                       currentPassword: e.target.value,
                     }))
                   }
-                  className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
                 />
               </div>
 
@@ -581,7 +657,7 @@ export function SettingsManager() {
                 </label>
                 <input
                   id="new-password"
-                  type="password"
+                  type={showPasswords ? "text" : "password"}
                   required
                   value={passwordForm.newPassword}
                   onChange={(e) =>
@@ -590,7 +666,7 @@ export function SettingsManager() {
                       newPassword: e.target.value,
                     }))
                   }
-                  className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
                 />
               </div>
 
@@ -603,7 +679,7 @@ export function SettingsManager() {
                 </label>
                 <input
                   id="confirm-password"
-                  type="password"
+                  type={showPasswords ? "text" : "password"}
                   required
                   value={passwordForm.confirmPassword}
                   onChange={(e) =>
@@ -612,7 +688,7 @@ export function SettingsManager() {
                       confirmPassword: e.target.value,
                     }))
                   }
-                  className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
                 />
               </div>
             </div>
@@ -621,17 +697,17 @@ export function SettingsManager() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+                className="rounded-lg bg-[#0056A7] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#004485] disabled:opacity-60"
               >
-                {saving ? "Updating..." : "Update Password"}
+                {saving ? t.common.saving : t.settings.updatePassword}
               </button>
             </div>
           </form>
 
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">
-                Active Session
+              <h3 className="text-sm font-semibold text-[#0B2D4D]">
+                {t.settings.activeSession}
               </h3>
               <p className="text-xs text-slate-500">
                 Signed in as {user?.email} ({user?.lastLoginAt})
@@ -642,7 +718,7 @@ export function SettingsManager() {
               onClick={() => void handleSignOut()}
               className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100"
             >
-              Sign out of this device
+              {t.settings.signOutDevice}
             </button>
           </div>
         </div>
@@ -652,15 +728,15 @@ export function SettingsManager() {
       {activeTab === "notifications" && (
         <form
           onSubmit={handlePrefsSave}
-          className="rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+          className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6"
         >
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">
-              Notification Preferences
+            <h3 className="text-sm font-semibold text-[#0B2D4D]">
+              {t.settings.tabNotifications}
             </h3>
             <p className="text-xs text-slate-500">
               Choose which production, shift, and team performance updates you
-              want to receive.
+              receive.
             </p>
           </div>
 
@@ -696,39 +772,62 @@ export function SettingsManager() {
                 title: "In-portal notifications",
                 desc: "Show live updates inside the Notifications center and header badge.",
               },
-            ].map((item) => (
-              <label
-                key={item.key}
-                className="flex items-start justify-between gap-4 py-3.5 cursor-pointer"
-              >
-                <div>
-                  <p className="text-xs font-semibold text-slate-900">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-slate-500">{item.desc}</p>
+            ].map((item) => {
+              const enabled = prefs[item.key];
+              return (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between gap-4 py-3.5"
+                >
+                  <div>
+                    <p className="text-xs font-semibold text-[#0B2D4D]">
+                      {item.title}
+                    </p>
+                    <p className="text-xs text-slate-500">{item.desc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    aria-label={item.title}
+                    onClick={() =>
+                      setPrefs((prev) => ({
+                        ...prev,
+                        [item.key]: !prev[item.key],
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+                      enabled ? "bg-[#0056A7]" : "bg-slate-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition-transform mt-0.5 ${
+                        enabled ? "translate-x-5.5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={prefs[item.key]}
-                  onChange={(e) =>
-                    setPrefs((prev) => ({
-                      ...prev,
-                      [item.key]: e.target.checked,
-                    }))
-                  }
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-              </label>
-            ))}
+              );
+            })}
           </div>
 
-          <div className="flex justify-end border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setPrefs(DEFAULT_PREFS);
+                setFeedback(null);
+              }}
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              {t.settings.resetDefaults}
+            </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+              className="rounded-lg bg-[#0056A7] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#004485] disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Save Alert Preferences"}
+              {saving ? t.common.saving : t.settings.savePrefs}
             </button>
           </div>
         </form>

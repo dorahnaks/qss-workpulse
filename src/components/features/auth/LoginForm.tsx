@@ -5,18 +5,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { AUTH_ROUTES } from "@/config/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/api/client";
 import { DEMO_CREDENTIALS } from "@/services/auth.service";
 
 export function LoginForm() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [demoFilled, setDemoFilled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,33 +51,32 @@ export function LoginForm() {
     setEmail(DEMO_CREDENTIALS.email);
     setPassword(DEMO_CREDENTIALS.password);
     setError(null);
+    setDemoFilled(true);
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-xs sm:p-8">
+    <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-2xs sm:p-8">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Sign in to your account
+        <h2 className="text-2xl font-semibold tracking-tight text-[#0B2D4D]">
+          {t.auth.loginTitle}
         </h2>
-        <p className="mt-1.5 text-sm text-slate-600">
-          Access your assigned QSS teams, shift outputs, and reports.
-        </p>
+        <p className="mt-1.5 text-sm text-slate-600">{t.auth.loginSubtitle}</p>
       </div>
 
       {/* Demo Credentials Helper */}
-      <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3">
-        <div className="min-w-0 text-xs text-indigo-900">
-          <p className="font-semibold">Demo Client Account</p>
-          <p className="truncate font-mono text-[11px] text-indigo-700">
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-[#0056A7]/20 bg-[#0056A7]/5 px-4 py-3">
+        <div className="min-w-0 text-xs text-[#0B2D4D]">
+          <p className="font-semibold">{t.auth.demoLabel}</p>
+          <p className="truncate font-mono text-[11px] text-[#0056A7]">
             {DEMO_CREDENTIALS.email}
           </p>
         </div>
         <button
           type="button"
           onClick={fillDemoCredentials}
-          className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-2xs ring-1 ring-indigo-200 transition-colors hover:bg-indigo-50"
+          className="shrink-0 rounded-lg bg-[#F6BA16] px-3 py-1.5 text-xs font-bold text-[#0B2D4D] transition-colors hover:bg-[#E09900]"
         >
-          Use demo
+          {demoFilled ? t.auth.demoFilled : t.auth.useDemo}
         </button>
       </div>
 
@@ -93,7 +95,7 @@ export function LoginForm() {
             htmlFor="login-email"
             className="block text-xs font-semibold text-slate-700"
           >
-            Work Email
+            {t.auth.workEmail}
           </label>
           <input
             id="login-email"
@@ -102,9 +104,12 @@ export function LoginForm() {
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setDemoFilled(false);
+            }}
             placeholder="name@company.com"
-            className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
           />
         </div>
 
@@ -114,13 +119,13 @@ export function LoginForm() {
               htmlFor="login-password"
               className="block text-xs font-semibold text-slate-700"
             >
-              Password
+              {t.auth.password}
             </label>
             <Link
               href={AUTH_ROUTES.forgotPassword}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              className="text-xs font-semibold text-[#0056A7] hover:text-[#004485]"
             >
-              Forgot password?
+              {t.auth.forgotPassword}
             </Link>
           </div>
           <div className="relative mt-1.5">
@@ -131,16 +136,19 @@ export function LoginForm() {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setDemoFilled(false);
+              }}
               placeholder="Enter your password"
-              className="block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-16 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-16 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0056A7] focus:outline-none focus:ring-2 focus:ring-[#0056A7]/20"
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-slate-500 hover:text-slate-700"
+              className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-slate-500 hover:text-[#0056A7]"
             >
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? t.auth.hide : t.auth.show}
             </button>
           </div>
         </div>
@@ -150,17 +158,17 @@ export function LoginForm() {
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-slate-300 accent-[#0056A7]"
           />
-          Keep me signed in on this device
+          {t.auth.keepSignedIn}
         </label>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg bg-[#0056A7] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#004485] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? "Signing in..." : "Sign In"}
+          {submitting ? t.auth.signingIn : t.common.signIn}
         </button>
       </form>
     </div>

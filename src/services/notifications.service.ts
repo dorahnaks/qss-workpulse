@@ -8,7 +8,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
     id: "ntf-101",
     title: "Morning Shift Completed Above Target",
     message:
-      "Alpha Packaging and Bravo Sorting completed the morning shift at 102.7% of agreed production target (4,620 / 4,500 units).",
+      "Alpha Packaging and Bravo Sorting completed the morning shift at 103.2% of agreed production target (1,910 / 1,850 cartons).",
     category: "shift",
     severity: "success",
     createdAt: "2026-11-25T11:05:00Z",
@@ -16,13 +16,13 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
     read: false,
     teamName: "Alpha Packaging",
     shiftName: "Morning Shift",
-    metricBadge: "102.7% Target",
+    metricBadge: "103.2% Target",
   },
   {
     id: "ntf-102",
     title: "Night Shift Output Variance Flagged",
     message:
-      "Echo Palletizing is currently 290 units behind target due to 3 absent operators. Supervisor Samuel Mutua has requested relief coverage.",
+      "Echo Palletizing is currently 110 cartons behind target due to 3 absent operators. Supervisor Samuel Mutua has requested relief coverage.",
     category: "production",
     severity: "warning",
     createdAt: "2026-11-25T09:40:00Z",
@@ -30,25 +30,25 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
     read: false,
     teamName: "Echo Palletizing",
     shiftName: "Night Shift",
-    metricBadge: "-290 Units",
+    metricBadge: "-110 Cartons",
   },
   {
     id: "ntf-103",
     title: "Weekly Team Performance Benchmark Reached",
     message:
-      "Your assigned QSS teams averaged 97.0% target achievement across 6 active teams this week — up 2.1% from last week.",
+      "Your assigned Q-Sourcing teams averaged 97.0% target achievement across 6 active teams this week — up 1.8% from last week.",
     category: "performance",
     severity: "info",
     createdAt: "2026-11-25T07:30:00Z",
     relativeTime: "3 hours ago",
     read: false,
-    metricBadge: "+2.1% WoW",
+    metricBadge: "+1.8% WoW",
   },
   {
     id: "ntf-104",
     title: "Afternoon Shift Check-in Confirmed",
     message:
-      "48 of 52 scheduled workers checked in on time across Charlie Dispatch and Delta Quality Check.",
+      "39 of 42 scheduled workers checked in on time across Charlie Dispatch and Delta Quality Check.",
     category: "shift",
     severity: "info",
     createdAt: "2026-11-24T14:15:00Z",
@@ -56,19 +56,19 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
     read: true,
     teamName: "Charlie Dispatch",
     shiftName: "Afternoon Shift",
-    metricBadge: "92.3% Attendance",
+    metricBadge: "92.9% Attendance",
   },
   {
     id: "ntf-105",
     title: "Daily Production Milestone Verified",
     message:
-      "Supervisor sign-off completed for yesterday's production log. Total verified output: 11,890 units across all hubs.",
+      "Supervisor sign-off completed for yesterday's production log. Total verified output: 4,760 cartons across all bays.",
     category: "production",
     severity: "success",
     createdAt: "2026-11-24T11:50:00Z",
     relativeTime: "Yesterday",
     read: true,
-    metricBadge: "11,890 Units",
+    metricBadge: "4,760 Cartons",
   },
   {
     id: "ntf-106",
@@ -178,4 +178,36 @@ export async function dismissNotification(id: string): Promise<void> {
 
   const updated = readLocalNotifications().filter((item) => item.id !== id);
   writeLocalNotifications(updated);
+}
+
+export async function setNotificationReadState(
+  id: string,
+  read: boolean
+): Promise<void> {
+  if (isLiveApiConfigured()) {
+    try {
+      await apiRequest(`/client/notifications/${encodeURIComponent(id)}/read`, {
+        method: "PATCH",
+        body: { read },
+      });
+      return;
+    } catch (error) {
+      if (!isNetworkFailure(error)) throw error;
+    }
+  }
+
+  const updated = readLocalNotifications().map((item) =>
+    item.id === id ? { ...item, read } : item
+  );
+  writeLocalNotifications(updated);
+}
+
+export async function restoreDemoNotifications(): Promise<NotificationItem[]> {
+  writeLocalNotifications(DEFAULT_NOTIFICATIONS);
+  return DEFAULT_NOTIFICATIONS;
+}
+
+export function appendLocalNotification(item: NotificationItem): void {
+  const existing = readLocalNotifications();
+  writeLocalNotifications([item, ...existing]);
 }
