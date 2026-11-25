@@ -1,14 +1,18 @@
 "use client";
 
+import "@/styles/portal-animations.css";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { WorkPulseChatbot } from "@/components/features/assistant/WorkPulseChatbot";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { PORTAL_NAV_ITEMS } from "@/config/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { getNotifications } from "@/services/notifications.service";
 
 function NavIcon({ href, active }: { href: string; active: boolean }) {
-  const cls = `h-4 w-4 shrink-0 ${active ? "text-indigo-600" : "text-slate-400"}`;
+  const cls = `h-4 w-4 shrink-0 ${active ? "text-[#0056A7]" : "text-slate-400"}`;
 
   switch (href) {
     case "/dashboard":
@@ -79,8 +83,10 @@ export function PortalShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, company, isLoading, isAuthenticated, logout } = useAuth();
+  const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -113,17 +119,22 @@ export function PortalShell({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   const handleLogout = async () => {
-    await logout();
-    router.replace("/login");
+    setSigningOut(true);
+    try {
+      await logout();
+      router.replace("/login");
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] px-6">
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
+          <div className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-[#0056A7]" />
           <p className="text-sm font-medium text-slate-600">
-            Loading QSS WorkPulse Portal...
+            Loading Q-Sourcing WorkPulse...
           </p>
         </div>
       </div>
@@ -135,11 +146,11 @@ export function PortalShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 lg:flex">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#212121] lg:flex">
       {/* Mobile Backdrop */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-[1px] lg:hidden"
+          className="fixed inset-0 z-30 bg-[#0B2D4D]/45 backdrop-blur-[1px] lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -150,22 +161,32 @@ export function PortalShell({ children }: { children: ReactNode }) {
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+        <div className="h-1 w-full bg-[#F6BA16]" />
+
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-xs font-bold text-white">
-              QP
+          <Link
+            href="/dashboard"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2.5"
+          >
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-[#0056A7] text-xs font-bold text-white">
+              Q
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#F6BA16]" />
             </div>
             <div>
-              <p className="text-sm font-semibold tracking-tight text-slate-900">
-                QSS WorkPulse
+              <p className="text-sm font-bold tracking-tight text-[#0B2D4D]">
+                Q-Sourcing
               </p>
-              <p className="text-[11px] text-slate-500">Client Portal</p>
+              <p className="text-[11px] font-medium text-[#0056A7]">
+                WorkPulse Portal
+              </p>
             </div>
           </Link>
+
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 lg:hidden"
+            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
             aria-label="Close navigation menu"
           >
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -181,22 +202,30 @@ export function PortalShell({ children }: { children: ReactNode }) {
         {/* Company Context Badge */}
         {company && (
           <div className="border-b border-slate-100 px-4 py-3">
-            <div className="rounded-lg bg-slate-50 px-3 py-2.5 border border-slate-200/70">
-              <p className="truncate text-xs font-semibold text-slate-900">
+            <Link
+              href="/settings?tab=company"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block rounded-xl border border-slate-200/80 bg-[#F7F8FA] px-3 py-2.5 transition-colors hover:border-[#0056A7]/40"
+            >
+              <p className="truncate text-xs font-semibold text-[#0B2D4D]">
                 {company.name}
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
+              <p className="mt-0.5 font-mono text-[11px] text-slate-500">
                 {company.accountCode}
               </p>
-            </div>
+            </Link>
           </div>
         )}
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Portal Navigation">
+        <nav
+          className="flex-1 overflow-y-auto px-3 py-4"
+          aria-label="Portal Navigation"
+        >
           <ul className="space-y-1">
             {PORTAL_NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
               const isNotifications = item.href === "/notifications";
 
               return (
@@ -204,18 +233,23 @@ export function PortalShell({ children }: { children: ReactNode }) {
                   <Link
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`relative flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                       active
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        ? "bg-[#0056A7]/10 text-[#0056A7]"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-[#0B2D4D]"
                     }`}
                   >
+                    {active && (
+                      <span className="absolute inset-y-1.5 left-0 w-1 rounded-r-full bg-[#0056A7]" />
+                    )}
                     <span className="flex items-center gap-3 truncate">
                       <NavIcon href={item.href} active={active} />
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate">
+                        {t.nav[item.href] ?? item.label}
+                      </span>
                     </span>
                     {isNotifications && unreadCount > 0 && (
-                      <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+                      <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-[#F6BA16] px-1.5 py-0.5 text-[11px] font-bold text-[#0B2D4D]">
                         {unreadCount}
                       </span>
                     )}
@@ -228,24 +262,40 @@ export function PortalShell({ children }: { children: ReactNode }) {
 
         {/* Bottom User Card */}
         <div className="border-t border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+          <Link
+            href="/settings"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-slate-50"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0056A7] text-xs font-bold text-white">
               {user?.avatarInitials ?? "QC"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-slate-900">
+              <p className="truncate text-xs font-semibold text-[#0B2D4D]">
                 {user?.name}
               </p>
-              <p className="truncate text-[11px] text-slate-500">{user?.email}</p>
+              <p className="truncate text-[11px] text-slate-500">
+                {user?.email}
+              </p>
             </div>
+          </Link>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg border border-slate-200 bg-[#F7F8FA] px-2.5 py-1.5 text-center text-xs font-semibold text-[#0B2D4D] transition-colors hover:border-[#0056A7]/40 hover:bg-white"
+            >
+              {t.common.backToSite}
+            </Link>
+            <button
+              type="button"
+              disabled={signingOut}
+              onClick={() => void handleLogout()}
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-[#0B2D4D] disabled:opacity-60"
+            >
+              {signingOut ? t.common.signingOut : t.common.signOut}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          >
-            Sign out
-          </button>
         </div>
       </aside>
 
@@ -260,13 +310,21 @@ export function PortalShell({ children }: { children: ReactNode }) {
               className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 lg:hidden"
               aria-label="Open navigation menu"
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div>
-              <h1 className="text-base font-semibold text-slate-900">
-                {activeNav?.label ?? "Client Portal"}
+              <h1 className="text-base font-semibold text-[#0B2D4D]">
+                {activeNav
+                  ? (t.nav[activeNav.href] ?? activeNav.label)
+                  : "Client Portal"}
               </h1>
               {company && (
                 <p className="hidden text-xs text-slate-500 sm:block">
@@ -276,18 +334,41 @@ export function PortalShell({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <Link
+              href="/"
+              className="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#0B2D4D] transition-colors hover:border-[#0056A7]/40 hover:bg-slate-50 md:inline-flex"
+            >
+              <svg
+                className="h-3.5 w-3.5 text-[#0056A7]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path d="M3 10.5 12 3l9 7.5" />
+                <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+              </svg>
+              <span>{t.common.backToSite}</span>
+            </Link>
+            <LanguageSwitcher compact />
             <Link
               href="/notifications"
-              className="relative rounded-lg border border-slate-200 p-2 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+              className="relative rounded-lg border border-slate-200 p-2 text-slate-600 transition-colors hover:border-[#0056A7]/40 hover:bg-slate-50 hover:text-[#0056A7]"
               aria-label="Notifications"
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white">
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F6BA16] px-1 text-[10px] font-bold text-[#0B2D4D]">
                   {unreadCount}
                 </span>
               )}
@@ -295,9 +376,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
 
             <Link
               href="/settings"
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0B2D4D] transition-colors hover:border-[#0056A7]/40 hover:bg-slate-50"
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-semibold text-indigo-700">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0056A7] text-[11px] font-bold text-white">
                 {user?.avatarInitials ?? "QC"}
               </span>
               <span className="hidden sm:inline">{user?.name}</span>
@@ -310,6 +391,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* Floating WorkPulse AI Assistant */}
+      <WorkPulseChatbot />
     </div>
   );
 }
