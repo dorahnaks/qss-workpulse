@@ -1,159 +1,139 @@
-import { ApiError, apiRequest, isLiveApiConfigured } from "@/lib/api/client";
-import { appendLocalNotification } from "@/services/notifications.service";
 import type {
   ClientTaskRequest,
   CreateTaskRequestPayload,
 } from "@/types/task-requests";
 
-const TASK_REQUESTS_STORAGE_KEY = "qss_workpulse_task_requests";
+/**
+ * Mock service for client task requests.
+ * In production, replace with actual API calls to Laravel backend.
+ */
 
-const DEFAULT_TASK_REQUESTS: ClientTaskRequest[] = [
+// Mock data storage (simulates backend)
+let mockTaskRequests: ClientTaskRequest[] = [
   {
-    id: "tsk-201",
-    referenceCode: "WR-2026-041",
-    title: "Urgent Export Pallet Shrink-Wrapping (Bay 4)",
-    category: "Packaging & Labeling",
-    description:
-      "Prepare and shrink-wrap 420 export cartons for regional dispatch truck arriving at 18:00.",
+    id: "TR-001",
+    referenceCode: "WP-2024-001",
+    title: "Warehouse Inventory Count",
+    category: "Inventory Management",
+    description: "Complete physical count of all items in warehouse sections A-D",
     priority: "High",
-    preferredShift: "Afternoon (14:00–22:00)",
+    preferredShift: "Morning (06:00–14:00)",
     estimatedWorkers: 8,
-    targetOutput: 420,
-    unitLabel: "cartons",
-    dueDate: "2026-11-25",
-    siteLocation: "Nairobi Industrial Park — Hub B",
-    status: "Pending Admin Review",
-    requestedBy: "Sarah Jenkins",
-    createdAt: "Today, 09:20 AM",
+    targetOutput: 5000,
+    unitLabel: "items counted",
+    dueDate: "2024-01-20",
+    siteLocation: "Main Warehouse - Nairobi",
+    status: "Assigned to Team",
+    assignedTeam: "Team A",
+    requestedBy: "John Kamau",
+    createdAt: "2024-01-15T08:30:00Z",
   },
   {
-    id: "tsk-202",
-    referenceCode: "WR-2026-039",
-    title: "Cold-Chain Inbound Container Offloading",
-    category: "Loading & Offloading",
-    description:
-      "Unload two 40ft containers and sort batches into Zone C chilled racks with barcode verification.",
-    priority: "Medium",
-    preferredShift: "Morning (06:00–14:00)",
+    id: "TR-002",
+    referenceCode: "WP-2024-002",
+    title: "Product Packaging - New Line",
+    category: "Packaging",
+    description: "Package new product line for retail distribution",
+    priority: "Urgent",
+    preferredShift: "Afternoon (14:00–22:00)",
     estimatedWorkers: 12,
-    targetOutput: 680,
-    unitLabel: "crates",
-    dueDate: "2026-11-26",
-    siteLocation: "Nairobi Industrial Park — Hub B",
-    status: "Assigned to Team",
-    assignedTeam: "Foxtrot Inbound",
-    requestedBy: "Sarah Jenkins",
-    createdAt: "Yesterday, 04:10 PM",
+    targetOutput: 3000,
+    unitLabel: "units packaged",
+    dueDate: "2024-01-18",
+    siteLocation: "Production Floor 2",
+    status: "In Progress",
+    assignedTeam: "Team B",
+    requestedBy: "Mary Wanjiku",
+    createdAt: "2024-01-14T10:15:00Z",
+  },
+  {
+    id: "TR-003",
+    referenceCode: "WP-2024-003",
+    title: "Quality Control Inspection",
+    category: "Quality Assurance",
+    description: "Inspect finished goods before dispatch",
+    priority: "Medium",
+    preferredShift: "Flexible",
+    estimatedWorkers: 5,
+    targetOutput: 2000,
+    unitLabel: "items inspected",
+    dueDate: "2024-01-22",
+    siteLocation: "QA Department",
+    status: "Pending Admin Review",
+    requestedBy: "Peter Omondi",
+    createdAt: "2024-01-16T14:00:00Z",
   },
 ];
 
-function readLocalTasks(): ClientTaskRequest[] {
-  if (typeof window === "undefined") return DEFAULT_TASK_REQUESTS;
-  try {
-    const raw = window.localStorage.getItem(TASK_REQUESTS_STORAGE_KEY);
-    if (!raw) return DEFAULT_TASK_REQUESTS;
-    return JSON.parse(raw) as ClientTaskRequest[];
-  } catch {
-    return DEFAULT_TASK_REQUESTS;
-  }
-}
+/**
+ * Get all task requests for the authenticated client
+ */
+export async function getTaskRequests(): Promise<ClientTaskRequest[]> {
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
-function writeLocalTasks(tasks: ClientTaskRequest[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(
-      TASK_REQUESTS_STORAGE_KEY,
-      JSON.stringify(tasks)
-    );
-  } catch {
-    // Ignore storage errors
-  }
-}
-
-function isNetworkFailure(error: unknown): boolean {
-  return (
-    error instanceof TypeError ||
-    (error instanceof ApiError && error.status === 0)
+  // In production: const response = await fetch('/api/task-requests', { headers: { Authorization: `Bearer ${token}` }});
+  return [...mockTaskRequests].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
-export async function getClientTaskRequests(): Promise<ClientTaskRequest[]> {
-  if (isLiveApiConfigured()) {
-    try {
-      const response = await apiRequest<{ data: ClientTaskRequest[] }>(
-        "/client/task-requests"
-      );
-      return response.data;
-    } catch (error) {
-      if (!isNetworkFailure(error)) throw error;
-    }
-  }
-  return readLocalTasks();
-}
-
-export async function createClientTaskRequest(
+/**
+ * Create a new task request
+ */
+export async function createTaskRequest(
   payload: CreateTaskRequestPayload
 ): Promise<ClientTaskRequest> {
-  if (isLiveApiConfigured()) {
-    try {
-      const response = await apiRequest<{ data: ClientTaskRequest }>(
-        "/client/task-requests",
-        {
-          method: "POST",
-          body: payload,
-        }
-      );
-      return response.data;
-    } catch (error) {
-      if (!isNetworkFailure(error)) throw error;
-    }
-  }
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 800));
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const current = readLocalTasks();
-  const nextSeq = String(42 + current.length).padStart(3, "0");
+  // Generate mock data
   const newTask: ClientTaskRequest = {
-    id: `tsk-${Date.now()}`,
-    referenceCode: `WR-2026-${nextSeq}`,
+    id: `TR-${String(mockTaskRequests.length + 1).padStart(3, "0")}`,
+    referenceCode: `WP-${new Date().getFullYear()}-${String(mockTaskRequests.length + 1).padStart(3, "0")}`,
     ...payload,
     status: "Pending Admin Review",
-    createdAt: "Just now",
+    createdAt: new Date().toISOString(),
   };
 
-  writeLocalTasks([newTask, ...current]);
+  // Add to mock storage
+  mockTaskRequests.unshift(newTask);
 
-  appendLocalNotification({
-    id: `ntf-task-${Date.now()}`,
-    title: `Task Submitted for Admin Assignment (${newTask.referenceCode})`,
-    message: `"${newTask.title}" (${newTask.targetOutput} ${newTask.unitLabel}, est. ${newTask.estimatedWorkers} workers) has been sent to Q-Sourcing Admin for team assignment.`,
-    category: "production",
-    severity: "info",
-    createdAt: new Date().toISOString(),
-    relativeTime: "Just now",
-    read: false,
-    shiftName: newTask.preferredShift,
-    metricBadge: newTask.priority,
-  });
-
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("qss:notifications-updated"));
-  }
+  // In production:
+  // const response = await fetch('/api/task-requests', {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+  //   body: JSON.stringify(payload)
+  // });
+  // return response.json();
 
   return newTask;
 }
 
-export async function cancelClientTaskRequest(id: string): Promise<void> {
-  if (isLiveApiConfigured()) {
-    try {
-      await apiRequest(`/client/task-requests/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      return;
-    } catch (error) {
-      if (!isNetworkFailure(error)) throw error;
-    }
+/**
+ * Get task request by ID
+ */
+export async function getTaskRequestById(
+  id: string
+): Promise<ClientTaskRequest | null> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  const task = mockTaskRequests.find((t) => t.id === id);
+  return task ?? null;
+}
+
+/**
+ * Delete a task request (only if not yet assigned)
+ */
+export async function deleteTaskRequest(id: string): Promise<boolean> {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const task = mockTaskRequests.find((t) => t.id === id);
+  if (!task || task.status !== "Pending Admin Review") {
+    return false; // Can only delete pending tasks
   }
 
-  const remaining = readLocalTasks().filter((task) => task.id !== id);
-  writeLocalTasks(remaining);
+  mockTaskRequests = mockTaskRequests.filter((t) => t.id !== id);
+  return true;
 }

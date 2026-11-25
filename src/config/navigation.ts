@@ -42,6 +42,13 @@ export const PORTAL_NAV_ITEMS: NavItem[] = [
     routeGroup: "(portal)",
   },
   {
+    label: "Task Requests",
+    href: "/task-requests",
+    description:
+      "Create new task requests to be assigned to teams by QSS supervisors.",
+    routeGroup: "(portal)",
+  },
+  {
     label: "Reports & Analytics",
     href: "/reports",
     description:
