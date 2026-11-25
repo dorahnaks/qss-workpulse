@@ -146,7 +146,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] text-[#212121] lg:flex">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#212121]">
       {/* Mobile Backdrop */}
       {mobileMenuOpen && (
         <div
@@ -155,9 +155,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed on all screen sizes */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -217,9 +217,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        {/* Navigation Links */}
+        {/* Navigation Links - Scrollable independently */}
         <nav
-          className="flex-1 overflow-y-auto px-3 py-4"
+          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent px-3 py-4"
           aria-label="Portal Navigation"
         >
           <ul className="space-y-1">
@@ -299,8 +299,8 @@ export function PortalShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* Main Content Area - Add left margin to account for fixed sidebar */}
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         {/* Top Bar */}
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xs sm:px-6">
           <div className="flex items-center gap-3">
