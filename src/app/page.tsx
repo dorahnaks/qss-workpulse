@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AUTH_ROUTES, PORTAL_NAV_ITEMS } from "@/config/navigation";
 
 const STACK_RESPONSIBILITIES = [
@@ -38,10 +39,18 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Project Initialized
-            </span>
+            <Link
+              href={AUTH_ROUTES.login}
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Open Portal
+            </Link>
           </div>
         </div>
       </header>
@@ -63,16 +72,25 @@ export default function HomePage() {
             and stay ahead of pending activities.
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-            <span className="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-slate-700">
-              Auth: {AUTH_ROUTES.login}
-            </span>
-            <span className="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-slate-700">
-              Reset: {AUTH_ROUTES.forgotPassword}
-            </span>
-            <span className="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-slate-700">
-              Portal: /dashboard
-            </span>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href={AUTH_ROUTES.login}
+              className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
+            >
+              Client Sign In
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Go to Dashboard
+            </Link>
+            <Link
+              href={AUTH_ROUTES.forgotPassword}
+              className="px-2 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-indigo-600"
+            >
+              Reset password &rarr;
+            </Link>
           </div>
         </section>
 
