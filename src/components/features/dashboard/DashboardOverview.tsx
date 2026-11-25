@@ -23,11 +23,11 @@ function formatNumber(value: number): string {
 function getStatusBadgeClass(status: ActiveTeamSnapshot["status"]): string {
   switch (status) {
     case "Exceeding":
-      return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+      return "bg-[#10B981]/10 text-[#10B981] ring-1 ring-[#10B981]/20";
     case "On Track":
-      return "bg-[#0056A7]/10 text-[#0056A7] ring-1 ring-[#0056A7]/20";
+      return "bg-[#1E3A8A]/10 text-[#1E3A8A] ring-1 ring-[#1E3A8A]/20";
     default:
-      return "bg-[#F6BA16]/20 text-[#9A6900] ring-1 ring-[#F6BA16]/50";
+      return "bg-[#F59E0B]/20 text-[#92400E] ring-1 ring-[#F59E0B]/50";
   }
 }
 
@@ -239,7 +239,7 @@ export function DashboardOverview() {
             <p className="text-xs font-semibold text-slate-500">
               {t.dashboard.deployedWorkers}
             </p>
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+            <span className="rounded-full bg-[#10B981]/10 px-2 py-0.5 text-[11px] font-semibold text-[#10B981]">
               {attendancePct}% {t.dashboard.attendance}
             </span>
           </div>
@@ -249,9 +249,9 @@ export function DashboardOverview() {
               / {summary.scheduledWorkers}
             </span>
           </p>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6]">
             <div
-              className="h-full rounded-full bg-emerald-500"
+              className="h-full rounded-full bg-[#10B981]"
               style={{ width: `${Math.min(attendancePct, 100)}%` }}
             />
           </div>
@@ -263,7 +263,7 @@ export function DashboardOverview() {
             <p className="text-xs font-semibold text-slate-500">
               {t.dashboard.activeTeams}
             </p>
-            <span className="rounded-full bg-[#0056A7]/10 px-2 py-0.5 text-[11px] font-semibold text-[#0056A7]">
+            <span className="rounded-full bg-[#1E3A8A]/10 px-2 py-0.5 text-[11px] font-semibold text-[#1E3A8A]">
               {summary.activeShiftsCount} {t.dashboard.shifts}
             </span>
           </div>
@@ -281,7 +281,7 @@ export function DashboardOverview() {
             <p className="text-xs font-semibold text-slate-500">
               {t.dashboard.actualVsTarget}
             </p>
-            <span className="rounded-full bg-[#F6BA16]/25 px-2 py-0.5 text-[11px] font-bold text-[#8A5D00]">
+            <span className="rounded-full bg-[#F59E0B]/25 px-2 py-0.5 text-[11px] font-bold text-[#92400E]">
               {formatNumber(summary.pendingOutput)} {t.dashboard.pending}
             </span>
           </div>
@@ -300,16 +300,16 @@ export function DashboardOverview() {
             <p className="text-xs font-semibold text-slate-500">
               {t.dashboard.targetAchievement}
             </p>
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+            <span className="rounded-full bg-[#10B981]/10 px-2 py-0.5 text-[11px] font-semibold text-[#10B981]">
               {summary.achievementDelta}
             </span>
           </div>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0B2D4D]">
             {summary.achievementRate.toFixed(1)}%
           </p>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6]">
             <div
-              className="h-full rounded-full bg-[#0056A7] transition-all"
+              className="h-full rounded-full bg-[#1E3A8A] transition-all"
               style={{ width: `${Math.min(summary.achievementRate, 100)}%` }}
             />
           </div>
@@ -338,7 +338,7 @@ export function DashboardOverview() {
                 {t.dashboard.targetLabel}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-xs bg-[#0056A7]" />
+                <span className="h-2.5 w-2.5 rounded-xs bg-[#1E3A8A]" />
                 Actual
               </span>
             </div>
@@ -370,20 +370,20 @@ export function DashboardOverview() {
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <div className="h-2 w-full rounded-full bg-slate-100">
+                    <div className="h-2 w-full rounded-full bg-[#F3F4F6]">
                       <div
                         className="h-2 rounded-full bg-slate-300 transition-all"
                         style={{ width: `${targetWidth}%` }}
                       />
                     </div>
-                    <div className="h-2.5 w-full rounded-full bg-slate-100">
+                    <div className="h-2.5 w-full rounded-full bg-[#F3F4F6]">
                       <div
                         className={`h-2.5 rounded-full transition-all ${
                           pct >= 100
-                            ? "bg-emerald-500"
+                            ? "bg-[#10B981]"
                             : pct >= 90
-                              ? "bg-[#0056A7]"
-                              : "bg-[#F6BA16]"
+                              ? "bg-[#1E3A8A]"
+                              : "bg-[#F59E0B]"
                         }`}
                         style={{ width: `${actualWidth}%` }}
                       />
@@ -425,7 +425,7 @@ export function DashboardOverview() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       {!item.read && (
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-[#F6BA16]" />
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-[#F59E0B]" />
                       )}
                       <p className="text-xs font-semibold text-[#0B2D4D]">
                         {item.title}
@@ -488,7 +488,7 @@ export function DashboardOverview() {
                 value={teamQuery}
                 onChange={(e) => setTeamQuery(e.target.value)}
                 placeholder={t.dashboard.searchTeamsPlaceholder}
-                className="w-44 bg-transparent px-1.5 py-1 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none sm:w-52"
+                className="w-44 bg-transparent px-1.5 py-1 text-xs text-[#111827] placeholder:text-slate-400 focus:outline-none sm:w-52"
               />
               <DictateButton
                 ariaLabel="Dictate team search"
@@ -508,7 +508,7 @@ export function DashboardOverview() {
                   setTeamQuery("");
                   setStatusFilter("all");
                 }}
-                className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-[#0056A7] hover:bg-slate-50"
+                className="mt-3 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 font-semibold text-[#1E3A8A] hover:bg-[#F3F4F6] transition-colors"
               >
                 {t.common.reset}
               </button>
@@ -559,14 +559,14 @@ export function DashboardOverview() {
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[#F3F4F6]">
                             <div
                               className={`h-full rounded-full ${
                                 pct >= 100
-                                  ? "bg-emerald-500"
+                                  ? "bg-[#10B981]"
                                   : pct >= 90
-                                    ? "bg-[#0056A7]"
-                                    : "bg-[#F6BA16]"
+                                    ? "bg-[#1E3A8A]"
+                                    : "bg-[#F59E0B]"
                               }`}
                               style={{ width: `${Math.min(pct, 100)}%` }}
                             />
